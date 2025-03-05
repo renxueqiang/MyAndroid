@@ -1,9 +1,6 @@
 package com.example.myapplication;
 
-import static android.content.ContentValues.TAG;
-
 import android.os.Bundle;
-import android.util.Log;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -11,29 +8,17 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import java.util.Arrays;
-
-public class MainActivity extends AppCompatActivity {
+public class MainActivity2 extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_main);
-//        setContentView(R.layout.second_controller);
+        setContentView(R.layout.activity_main22);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-
-        Log.d(TAG, "我看到你了");
-        Log.d("MainActivity", "我看到你了");
-        Log.d("MainActivity", "我看到你了");
-        Integer[] intArray = { 89, 3, 67, 12, 45 };
-        Arrays.sort(intArray, (o1, o2) -> Integer.compare(o2, o1));
-        Log.d("MainActivity", Arrays.toString(intArray));
     }
 }
-
-
