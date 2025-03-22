@@ -12,7 +12,18 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MyApplication"
         tools:targetApi="31">
-<!--       添加了下面这行配置，表示给该页面注册身份，否则App运行时打开页面会提示错误“activity not found”。-->
+        <activity
+            android:name=".MainActivity1"
+            android:exported="false" />
+        <activity
+            android:name=".MainActivity5"
+            android:exported="false" />
+        <activity
+            android:name=".MainActivity4"
+            android:exported="false" />
+        <activity
+            android:name=".MainActivity3"
+            android:exported="false" /> <!-- 添加了下面这行配置，表示给该页面注册身份，否则App运行时打开页面会提示错误“activity not found”。 -->
         <activity
             android:name=".MainActivity2"
             android:exported="false" />

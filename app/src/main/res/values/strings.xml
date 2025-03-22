@@ -5,13 +5,12 @@
     <string name="second_fragment_label">Second Fragment</string>
     <string name="next">Next</string>
     <string name="previous">Previous</string>
-
     <string name="testString">我是一个textView控件</string>
-
-
-
-
-
+    <string name="btn01">我是按钮01</string>
+    <string name="btn02">我是按钮02</string>
+    <string name="btn03">我是按钮03</string>
+    <string name="btn04">我是按钮04</string>
+    <string name="btn05">我是按钮05</string>
 
 
     <string name="lorem_ipsum">
