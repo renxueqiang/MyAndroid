@@ -1,7 +1,5 @@
 package com.example.myapplication;
 
-import static android.content.ContentValues.TAG;
-
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
@@ -17,6 +15,7 @@ import androidx.core.view.WindowInsetsCompat;
 import java.util.Arrays;
 
 public class MainActivity1 extends AppCompatActivity {
+    private static final String TAG = "MainActivity1";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,9 +28,9 @@ public class MainActivity1 extends AppCompatActivity {
             return insets;
         });
 
-        Log.d(TAG, "我看到你了12333333");
-        Log.d("MainActivity", "我看到你了");
-        Log.d("MainActivity", "我看到你了");
+        // 读取上一个页面传过来的参数示例
+        readParamsFromIntent();
+
         Integer[] intArray = { 89, 3, 67, 12, 45 };
         Arrays.sort(intArray, (o1, o2) -> Integer.compare(o2, o1));
         Log.d("MainActivity", Arrays.toString(intArray));
@@ -51,6 +50,54 @@ public class MainActivity1 extends AppCompatActivity {
         textView.setLayoutParams(params); // 设置tv_code的布局参数
 
         textView.setText("我是文字");
+    }
+
+    private void readParamsFromIntent() {
+        Bundle extras = getIntent().getExtras();
+        if (extras == null) {
+            Log.d(TAG, "没有收到任何参数");
+            return;
+        }
+
+        // 方式1：直接 putExtra 对应的读取
+        String nameFromExtra = getIntent().getStringExtra(MainActivity.EXTRA_NAME);
+        int ageFromExtra = getIntent().getIntExtra(MainActivity.EXTRA_AGE, -1);
+        Log.d(TAG, "方式1-putExtra: name=" + nameFromExtra + ", age=" + ageFromExtra);
+
+        // 方式2：Bundle 对应的读取
+        Bundle bundle = getIntent().getBundleExtra(MainActivity.EXTRA_BUNDLE);
+        if (bundle != null) {
+            String nameFromBundle = bundle.getString("bundle_name");
+            int ageFromBundle = bundle.getInt("bundle_age", -1);
+            Log.d(TAG, "方式2-Bundle: name=" + nameFromBundle + ", age=" + ageFromBundle);
+        }
+
+        // 方式3：Serializable 对应的读取
+        UserSerializable serializableUser;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            serializableUser = getIntent().getSerializableExtra(
+                    MainActivity.EXTRA_USER_SERIALIZABLE, UserSerializable.class);
+        } else {
+            serializableUser = (UserSerializable) getIntent().getSerializableExtra(
+                    MainActivity.EXTRA_USER_SERIALIZABLE);
+        }
+        if (serializableUser != null) {
+            Log.d(TAG, "方式3-Serializable: name=" + serializableUser.getName()
+                    + ", age=" + serializableUser.getAge());
+        }
+
+        // 方式4：Parcelable 对应的读取
+        UserParcelable parcelableUser;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            parcelableUser = getIntent().getParcelableExtra(
+                    MainActivity.EXTRA_USER_PARCELABLE, UserParcelable.class);
+        } else {
+            parcelableUser = getIntent().getParcelableExtra(MainActivity.EXTRA_USER_PARCELABLE);
+        }
+        if (parcelableUser != null) {
+            Log.d(TAG, "方式4-Parcelable: name=" + parcelableUser.getName()
+                    + ", age=" + parcelableUser.getAge());
+        }
     }
 
     @Override
