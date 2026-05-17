@@ -175,6 +175,10 @@ public class MainActivity extends AppCompatActivity {
         startActivity(new Intent(MainActivity.this, MainActivity4.class));
     }
 
+    public void btn05Click(View view) {
+        startActivity(new Intent(MainActivity.this, MainActivity5.class));
+    }
+
 
     private final Runnable mGoNext = new Runnable() {
         @Override

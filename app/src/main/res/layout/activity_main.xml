@@ -49,4 +49,14 @@
         android:text="@string/btn04"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/button2" />
+
+    <Button
+        android:id="@+id/button5"
+        android:layout_width="169dp"
+        android:layout_height="51dp"
+        android:layout_marginTop="24dp"
+        android:onClick="btn05Click"
+        android:text="Handler"
+        app:layout_constraintStart_toStartOf="@+id/button1"
+        app:layout_constraintTop_toBottomOf="@+id/button3" />
 </androidx.constraintlayout.widget.ConstraintLayout>
