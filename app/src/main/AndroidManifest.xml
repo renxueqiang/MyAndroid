@@ -37,6 +37,13 @@
         <activity
             android:name=".MainActivity3"
             android:exported="false" />
+        <provider
+            android:name=".DemoContentProvider"
+            android:authorities="com.example.myapplication.demo.provider"
+            android:exported="false" />
+        <service
+            android:name=".DemoService"
+            android:exported="false" />
     </application>
 
 </manifest>

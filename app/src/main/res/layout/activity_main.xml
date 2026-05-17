@@ -31,10 +31,22 @@
 
     <Button
         android:id="@+id/button3"
-        android:layout_width="122dp"
-        android:layout_height="58dp"
+        android:layout_width="169dp"
+        android:layout_height="51dp"
         android:layout_marginTop="92dp"
+        android:onClick="btn03Click"
         android:text="@string/btn03"
         app:layout_constraintStart_toStartOf="@+id/button1"
         app:layout_constraintTop_toBottomOf="@+id/button1" />
+
+    <Button
+        android:id="@+id/button4"
+        android:layout_width="122dp"
+        android:layout_height="58dp"
+        android:layout_marginTop="92dp"
+        android:layout_marginEnd="52dp"
+        android:onClick="btn04Click"
+        android:text="@string/btn04"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/button2" />
 </androidx.constraintlayout.widget.ConstraintLayout>

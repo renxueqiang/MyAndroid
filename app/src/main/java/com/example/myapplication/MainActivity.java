@@ -1,14 +1,20 @@
 package com.example.myapplication;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -21,16 +27,32 @@ import java.util.Objects;
 //更多的版本对应关系见https://developer.android.google.cn/studio/releases/gradle-plugin#updating-plugin
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
+    public static final String ACTION_DEMO_BROADCAST = "com.example.myapplication.ACTION_DEMO_BROADCAST";
+    public static final String EXTRA_BROADCAST_MESSAGE = "extra_broadcast_message";
     public static final String EXTRA_NAME = "extra_name";
     public static final String EXTRA_AGE = "extra_age";
     public static final String EXTRA_BUNDLE = "extra_bundle";
     public static final String EXTRA_USER_SERIALIZABLE = "extra_user_serializable";
     public static final String EXTRA_USER_PARCELABLE = "extra_user_parcelable";
+    public static final String EXTRA_RESULT_MESSAGE = "extra_result_message";
     // 学习重点：
     // 1. 最常用：onCreate / onResume / onPause
     // 2. 常见但次要：onStart / onStop
     // 3. 较少直接用：onRestart / onDestroy
     // 4. 最容易误用：onPause 里做重活、把一次性初始化放到 onResume
+    private boolean isDemoReceiverRegistered = false;
+    // 动态广播接收器：页面可见时接收，页面不可见时注销
+    private final BroadcastReceiver demoBroadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (ACTION_DEMO_BROADCAST.equals(intent.getAction())) {
+                String msg = intent.getStringExtra(EXTRA_BROADCAST_MESSAGE);
+                Log.d(TAG, "收到广播: " + msg);
+                Toast.makeText(MainActivity.this, "收到广播: " + msg, Toast.LENGTH_SHORT).show();
+            }
+        }
+    };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +71,11 @@ public class MainActivity extends AppCompatActivity {
 
         Button btn02 = findViewById(R.id.button2);
         btn02.setOnClickListener(this::btn02Click);
+        Button btn03 = findViewById(R.id.button3);
+        btn03.setOnClickListener(this::btn03Click);
+
+        // Demo 场景：即使跳到 MainActivity2，也希望 MainActivity 还能收到广播
+        registerDemoBroadcastReceiver();
     }
 
     @Override
@@ -96,6 +123,7 @@ public class MainActivity extends AppCompatActivity {
         // 适合做：释放对象、注销监听、关闭资源。
         // 注意：进程被系统杀掉时，不一定总能等到这里。
         // 类比 iOS：dealloc
+        unregisterDemoBroadcastReceiver();
         Log.d(TAG, "onDestroy -> 类比 iOS 的 dealloc");
     }
 
@@ -139,14 +167,61 @@ public class MainActivity extends AppCompatActivity {
         new Handler(Objects.requireNonNull(Looper.myLooper())).postDelayed(mGoNext, 3000);
     }
 
+    public void btn03Click(View view) {
+        startActivity(new Intent(MainActivity.this, MainActivity3.class));
+    }
+
+    public void btn04Click(View view) {
+        startActivity(new Intent(MainActivity.this, MainActivity4.class));
+    }
+
 
     private final Runnable mGoNext = new Runnable() {
         @Override
         public void run() {
-            startActivity(new Intent(MainActivity.this, MainActivity2.class));
+            Intent intent = new Intent(MainActivity.this, MainActivity2.class);
+
+            // 方式1：直接 putExtra（最常用）
+            intent.putExtra(EXTRA_NAME, "小明");
+            intent.putExtra(EXTRA_AGE, 12);
+            // 以“可回调”方式启动，等 MainActivity2 回传参数
+            main2Launcher.launch(intent);
         }
 
     };
 
+    private final ActivityResultLauncher<Intent> main2Launcher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    String message = result.getData().getStringExtra(EXTRA_RESULT_MESSAGE);
+                    Log.d(TAG, "收到 MainActivity2 回调: " + message);
+                }
+            });
+
+    private void registerDemoBroadcastReceiver() {
+        if (isDemoReceiverRegistered) {
+            return;
+        }
+        IntentFilter filter = new IntentFilter(ACTION_DEMO_BROADCAST);
+        registerReceiver(demoBroadcastReceiver, filter, RECEIVER_NOT_EXPORTED);
+        isDemoReceiverRegistered = true;
+    }
+
+    private void unregisterDemoBroadcastReceiver() {
+        if (!isDemoReceiverRegistered) {
+            return;
+        }
+        unregisterReceiver(demoBroadcastReceiver);
+        isDemoReceiverRegistered = false;
+    }
 
 }
+
+/*
+Activity: 用户看到的一个个界面。负责 UI 展示和用户交互。
+Service: 在后台执行长时间运行操作，无 UI。例如播放音乐、下载文件。
+BroadcastReceiver: 接收并处理系统或应用发出的广播消息。例如网络状态变化、电量低。
+ContentProvider: 在不同应用程序之间共享数据。例如访问通讯录、相册
+
+
+*/
