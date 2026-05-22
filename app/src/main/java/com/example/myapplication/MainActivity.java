@@ -5,28 +5,32 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.Button;
+import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
-import java.util.Objects;
+import java.util.Arrays;
+import java.util.List;
 
-
-//Studio 4.1对应的Gradle版本为6.5，
-//更多的版本对应关系见https://developer.android.google.cn/studio/releases/gradle-plugin#updating-plugin
+// Studio 4.1对应的Gradle版本为6.5，
+// 更多的版本对应关系见https://developer.android.google.cn/studio/releases/gradle-plugin#updating-plugin
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
+
     public static final String ACTION_DEMO_BROADCAST = "com.example.myapplication.ACTION_DEMO_BROADCAST";
     public static final String EXTRA_BROADCAST_MESSAGE = "extra_broadcast_message";
     public static final String EXTRA_NAME = "extra_name";
@@ -35,13 +39,15 @@ public class MainActivity extends AppCompatActivity {
     public static final String EXTRA_USER_SERIALIZABLE = "extra_user_serializable";
     public static final String EXTRA_USER_PARCELABLE = "extra_user_parcelable";
     public static final String EXTRA_RESULT_MESSAGE = "extra_result_message";
-    // 学习重点：
-    // 1. 最常用：onCreate / onResume / onPause
-    // 2. 常见但次要：onStart / onStop
-    // 3. 较少直接用：onRestart / onDestroy
-    // 4. 最容易误用：onPause 里做重活、把一次性初始化放到 onResume
+
+    private static final int ITEM_INTENT = 1;
+    private static final int ITEM_RESULT_AND_BROADCAST = 2;
+    private static final int ITEM_CONTENT_PROVIDER = 3;
+    private static final int ITEM_SERVICE = 4;
+    private static final int ITEM_HANDLER = 5;
+
     private boolean isDemoReceiverRegistered = false;
-    // 动态广播接收器：页面可见时接收，页面不可见时注销
+
     private final BroadcastReceiver demoBroadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -53,6 +59,14 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    private final ActivityResultLauncher<Intent> main2Launcher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    String message = result.getData().getStringExtra(EXTRA_RESULT_MESSAGE);
+                    Log.d(TAG, "收到 MainActivity2 回调: " + message);
+                    Toast.makeText(MainActivity.this, "MainActivity2回调: " + message, Toast.LENGTH_SHORT).show();
+                }
+            });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,10 +83,9 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        Button btn02 = findViewById(R.id.button2);
-        btn02.setOnClickListener(this::btn02Click);
-        Button btn03 = findViewById(R.id.button3);
-        btn03.setOnClickListener(this::btn03Click);
+        RecyclerView recyclerView = findViewById(R.id.rv_menu);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setAdapter(new MenuAdapter(buildMenuItems(), this::onMenuItemClicked));
 
         // Demo 场景：即使跳到 MainActivity2，也希望 MainActivity 还能收到广播
         registerDemoBroadcastReceiver();
@@ -136,10 +149,41 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "onRestart -> 页面从不可见回到可见");
     }
 
-    public void btnClick(View view) {
-        Intent intent = new Intent(MainActivity.this, MainActivity1.class);
+    private List<HomeMenuItem> buildMenuItems() {
+        return Arrays.asList(
+                new HomeMenuItem(ITEM_INTENT, "Intent 传参与接收", "演示 putExtra/Bundle/Serializable/Parcelable"),
+                new HomeMenuItem(ITEM_RESULT_AND_BROADCAST, "Activity 回调 + 广播", "传 name/age 到 MainActivity2，并回传 + 发广播"),
+                new HomeMenuItem(ITEM_CONTENT_PROVIDER, "ContentProvider 示例", "演示 insert/query/update/delete"),
+                new HomeMenuItem(ITEM_SERVICE, "Service 示例", "演示 start/stop 与 bind/unbind"),
+                new HomeMenuItem(ITEM_HANDLER, "Handler 消息机制", "演示 post/sendMessage/线程切换/取消消息")
+        );
+    }
 
-        // 方式1：直接 putExtra（最常用）
+    private void onMenuItemClicked(HomeMenuItem item) {
+        switch (item.id) {
+            case ITEM_INTENT:
+                openIntentDemo();
+                break;
+            case ITEM_RESULT_AND_BROADCAST:
+                openMain2WithResult();
+                break;
+            case ITEM_CONTENT_PROVIDER:
+                startActivity(new Intent(this, MainActivity3.class));
+                break;
+            case ITEM_SERVICE:
+                startActivity(new Intent(this, MainActivity4.class));
+                break;
+            case ITEM_HANDLER:
+                startActivity(new Intent(this, MainActivity5.class));
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void openIntentDemo() {
+        // 方式1：直接传 name/age
+        Intent intent = new Intent(this, MainActivity1.class);
         intent.putExtra(EXTRA_NAME, "小明");
         intent.putExtra(EXTRA_AGE, 12);
 
@@ -161,46 +205,12 @@ public class MainActivity extends AppCompatActivity {
         overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
     }
 
-    public void btn02Click(View view) {
-
-        //延迟3秒(3000毫秒)后启动任务
-        new Handler(Objects.requireNonNull(Looper.myLooper())).postDelayed(mGoNext, 3000);
+    private void openMain2WithResult() {
+        Intent intent = new Intent(this, MainActivity2.class);
+        intent.putExtra(EXTRA_NAME, "小明");
+        intent.putExtra(EXTRA_AGE, 12);
+        main2Launcher.launch(intent);
     }
-
-    public void btn03Click(View view) {
-        startActivity(new Intent(MainActivity.this, MainActivity3.class));
-    }
-
-    public void btn04Click(View view) {
-        startActivity(new Intent(MainActivity.this, MainActivity4.class));
-    }
-
-    public void btn05Click(View view) {
-        startActivity(new Intent(MainActivity.this, MainActivity5.class));
-    }
-
-
-    private final Runnable mGoNext = new Runnable() {
-        @Override
-        public void run() {
-            Intent intent = new Intent(MainActivity.this, MainActivity2.class);
-
-            // 方式1：直接 putExtra（最常用）
-            intent.putExtra(EXTRA_NAME, "小明");
-            intent.putExtra(EXTRA_AGE, 12);
-            // 以“可回调”方式启动，等 MainActivity2 回传参数
-            main2Launcher.launch(intent);
-        }
-
-    };
-
-    private final ActivityResultLauncher<Intent> main2Launcher = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(), result -> {
-                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                    String message = result.getData().getStringExtra(EXTRA_RESULT_MESSAGE);
-                    Log.d(TAG, "收到 MainActivity2 回调: " + message);
-                }
-            });
 
     private void registerDemoBroadcastReceiver() {
         if (isDemoReceiverRegistered) {
@@ -219,13 +229,61 @@ public class MainActivity extends AppCompatActivity {
         isDemoReceiverRegistered = false;
     }
 
+    private interface OnMenuItemClickListener {
+        void onClick(HomeMenuItem item);
+    }
+
+    private static class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.MenuViewHolder> {
+        private final List<HomeMenuItem> items;
+        private final OnMenuItemClickListener listener;
+
+        MenuAdapter(List<HomeMenuItem> items, OnMenuItemClickListener listener) {
+            this.items = items;
+            this.listener = listener;
+        }
+
+        @NonNull
+        @Override
+        public MenuViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.item_home_menu, parent, false);
+            return new MenuViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull MenuViewHolder holder, int position) {
+            HomeMenuItem item = items.get(position);
+            holder.title.setText(item.title);
+            holder.subtitle.setText(item.subtitle);
+            holder.itemView.setOnClickListener(v -> listener.onClick(item));
+        }
+
+        @Override
+        public int getItemCount() {
+            return items.size();
+        }
+
+        static class MenuViewHolder extends RecyclerView.ViewHolder {
+            final TextView title;
+            final TextView subtitle;
+
+            MenuViewHolder(@NonNull View itemView) {
+                super(itemView);
+                title = itemView.findViewById(R.id.tv_item_title);
+                subtitle = itemView.findViewById(R.id.tv_item_subtitle);
+            }
+        }
+    }
+
+    private static class HomeMenuItem {
+        final int id;
+        final String title;
+        final String subtitle;
+
+        HomeMenuItem(int id, String title, String subtitle) {
+            this.id = id;
+            this.title = title;
+            this.subtitle = subtitle;
+        }
+    }
 }
-
-/*
-Activity: 用户看到的一个个界面。负责 UI 展示和用户交互。
-Service: 在后台执行长时间运行操作，无 UI。例如播放音乐、下载文件。
-BroadcastReceiver: 接收并处理系统或应用发出的广播消息。例如网络状态变化、电量低。
-ContentProvider: 在不同应用程序之间共享数据。例如访问通讯录、相册
-
-
-*/
